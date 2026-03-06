@@ -1,6 +1,9 @@
 import cv2
 import numpy as np
 import os
+import logging
+
+from utils import load_images
 
 
 class OpticalFlowManager:
@@ -95,45 +98,52 @@ class OpticalFlowManager:
 
 
 
+
 from utils import *
 
 def run():
-    IMAGES_DIR = "test/img/"
-    MASKS_DIR = "test/mask/"
-    NEXT_DIR = "test/next/"
-    RESULTS_DIR = "result/flow/"
+    logging.basicConfig(level=logging.INFO)
+    DIR = "flow/"
+
+    samples = os.listdir(f"{DIR}")
+    samples.sort()
 
     display_result = True
 
-    img_name = "215.png"
-    next_name = "220.png"
-    mask_name = img_name
+    manager = OpticalFlowManager()
 
-    img = cv2.imread(f"{IMAGES_DIR}{img_name}", cv2.IMREAD_GRAYSCALE)
-    mask = cv2.imread(f"{MASKS_DIR}{mask_name}", cv2.IMREAD_GRAYSCALE)
-    # Ensure the mask is strictly 0 and 255
-    _, mask = cv2.threshold(mask, 127, 255, cv2.THRESH_BINARY)
-    next = cv2.imread(f"{NEXT_DIR}{next_name}", cv2.IMREAD_GRAYSCALE)
+    for sample in samples:
+        # Load images
+        images = load_images(f"{DIR}{sample}/img/")
+        masks = load_images(f"{DIR}{sample}/mask/")
+        next_images = load_images(f"{DIR}{sample}/next/")
 
-    manager = OpticalFlowManager(RESULTS_DIR)
-    # Setting the attributes
-    manager.gt_img = img
-    manager.gt_mask = mask
-    manager.next_img = next
+        # Set output path
+        result_path = f"{DIR}{sample}/result/"
+        if not os.path.exists(result_path):
+            os.mkdir(result_path)
+        manager.result_dir = result_path
 
-    # Propagating
-    manager.propagate_mask()
-    propagated_mask = manager.propagated_mask
+        for i in range(len(images)):
+            # Setting the attributes
+            manager.gt_img = images[i]
+            manager.gt_mask = masks[i]
+            manager.next_img = next_images[i]
 
-    manager.save_propagated_mask(next_name)
+            # Propagating
+            manager.propagate_mask()
+            propagated_mask = manager.propagated_mask
 
-    if not display_result:
-        return
+            manager.save_propagated_mask(f"propagated_mask_{i}.png")
 
-    display_images([img, mask, next, propagated_mask],
-                [f"GT Image {img_name}", f"GT Mask {mask_name}", f"Image {next_name}", f"Propagated Mask {next_name}"])
-    
-    display_masks_comparison(mask, propagated_mask, f"GT Mask {mask_name}", f"Propagated Mask {next_name}")
+            if display_result:
+                display_images([images[i], masks[i], next_images[i], propagated_mask],
+                            [f"GT Image {i}", f"GT Mask {i}", f"Image {i}", f"Propagated Mask {i}"])
+                
+                display_masks_comparison(masks[i], propagated_mask, f"GT Mask {i}", f"Propagated Mask {i}")
+
+        logging.info(f"Processed sample {sample}")
+
 
 
 if __name__ == "__main__":

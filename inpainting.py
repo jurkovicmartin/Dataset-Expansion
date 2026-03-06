@@ -1,6 +1,9 @@
 import cv2
 import numpy as np
 import os
+import logging
+
+from utils import resize_and_pad
 
 
 class InpaintingManager:
@@ -21,6 +24,10 @@ class InpaintingManager:
         self.mask_dir = mask_dir
         self.result_dir = result_dir
         self.inpaint_radius = inpaint_radius
+        # Inpainting algorithm
+        self.algorithm = cv2.INPAINT_NS
+        # self.algorithm = cv2.INPAINT_TELEA
+
 
         if not os.path.exists(self.result_dir):
             os.makedirs(self.result_dir)
@@ -35,7 +42,10 @@ class InpaintingManager:
             raise ValueError("Number of images and masks must be the same.")
 
 
-    def load_image_and_mask(self, index: int =0) -> tuple[np.ndarray, np.ndarray]:
+        logging.info(f"Number of images loaded: {len(self.img_names)}")
+
+
+    def _load_image_and_mask(self, index: int =0) -> tuple[np.ndarray, np.ndarray]:
         """
         Loads an image and its corresponding mask. Indexes correspond to the position of the image and mask in the directories.
 
@@ -67,17 +77,16 @@ class InpaintingManager:
         Returns:
             np.ndarray: The inpainted image.
         """
-        # Set inpainting algorithm
-        method = cv2.INPAINT_NS
-
         # Dilate the mask slightly to capture the noise around the defects
-        kernel = np.ones((10, 10), np.uint8)
+        # kernel = np.ones((5, 5), np.uint8)
+        # Circular kernel
+        kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (10, 10))
         dilated_mask = cv2.dilate(mask, kernel, iterations=1)
 
         # display_images([img, mask, dilated_mask], ["Image", "Mask", "Dilated Mask"])
 
-        return cv2.inpaint(img, dilated_mask, inpaintRadius=self.inpaint_radius, flags=method)
-    
+        return cv2.inpaint(img, dilated_mask, inpaintRadius=self.inpaint_radius, flags=self.algorithm)
+
 
     def inpaint_full_set(self):
         """
@@ -86,10 +95,14 @@ class InpaintingManager:
         Iterates over all image-mask pairs in the dataset, inpaints the image, and saves the result in the result directory.
         """
         for i, name in enumerate(self.img_names):
-            image, mask = self.load_image_and_mask(i)
+            image, mask = self._load_image_and_mask(i)
             synthetic = self.inpaint(image, mask)
 
             cv2.imwrite(os.path.join(self.result_dir, f"{name}"), synthetic)
+
+        logging.info(f"Inpainting completed. Results saved in {self.result_dir}.")
+
+
 
 
 
@@ -100,13 +113,15 @@ from utils import *
 
 
 def run():
-    IMAGES_DIR = "data/img"
-    MASKS_DIR = "data/mask"
-    RESULTS_DIR = "result/inpaint/"
+    logging.basicConfig(level=logging.INFO)
 
-    display_result = False
+    IMAGES_DIR = "inpaint/img"
+    MASKS_DIR = "inpaint/mask"
+    RESULTS_DIR = "inpaint/result"
 
-    manager = InpaintingManager(IMAGES_DIR, MASKS_DIR, RESULTS_DIR, inpaint_radius=5)
+    display_result = True
+
+    manager = InpaintingManager(IMAGES_DIR, MASKS_DIR, RESULTS_DIR, inpaint_radius=30)
     manager.inpaint_full_set()
 
     if not display_result:
@@ -120,7 +135,7 @@ def run():
         mask = cv2.imread(f"{MASKS_DIR}/{name}", cv2.IMREAD_GRAYSCALE)
         synthetic = cv2.imread(f"{RESULTS_DIR}/{name}", cv2.IMREAD_GRAYSCALE)
 
-        display_images([img, mask, synthetic], [f"Image {name}", f"Mask {name}", f"Synthetic {name}"])
+        # display_images([img, mask, synthetic], [f"Image {name}", f"Mask {name}", f"Synthetic {name}"])
 
         display_overlays([img, img, synthetic, synthetic],
                          [mask, np.zeros_like(img), mask, np.zeros_like(synthetic)],

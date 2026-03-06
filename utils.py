@@ -3,7 +3,10 @@ import matplotlib.patches as mpatches
 import math
 import numpy as np
 import cv2
+import os
 
+
+############################### DISPLAYING #######################################################
 
 def display_images(images: list[np.ndarray], titles: list[str] =None):
     """
@@ -149,3 +152,57 @@ def display_masks_comparison(mask_a: np.ndarray, mask_b: np.ndarray, title_a="Ma
     plt.tight_layout()
     plt.show()
 
+################################################### FILES ############################################################
+
+def load_images(dir_path: str) -> list[np.ndarray]:
+    """
+    Loads all images in a directory.
+
+    Args:
+        dir_path (str): Directory path containing the images to load.
+
+    Returns:
+        list[np.ndarray]: A list of grayscale images.
+    """
+    output = []
+
+    names = [f for f in os.listdir(dir_path) if f.endswith(".png")]
+    names.sort()
+
+    for name in names:
+        path = os.path.join(dir_path, name)
+        img = cv2.imread(path, cv2.IMREAD_GRAYSCALE)
+        output.append(img)
+
+    return output
+
+
+def resize_and_pad(img: np.ndarray, size: int =256) -> np.ndarray:
+        """
+        Resizes the given image to the given size, and pads it to fit the size if necessary.
+
+        Args:
+            img (np.ndarray): The image to be resized and padded.
+            size (int, optional): The size to resize the image to. Defaults to 256.
+
+        Returns:
+            np.ndarray: The resized and padded image.
+
+        Raises:
+            ValueError: If the given image is not a 2D array.
+        """
+        height, width = img.shape
+        scale = size / max(height, width)
+        new_w, new_h = int(width * scale), int(height * scale)
+        
+        resized = cv2.resize(img, (new_w, new_h), interpolation=cv2.INTER_AREA)
+        
+        # Create padded image
+        new_img = np.full((size, size), 0, dtype=img.dtype)
+        
+        # Center the resized image
+        pad_w = (size - new_w) // 2
+        pad_h = (size - new_h) // 2
+        new_img[pad_h:pad_h+new_h, pad_w:pad_w+new_w] = resized
+        
+        return new_img

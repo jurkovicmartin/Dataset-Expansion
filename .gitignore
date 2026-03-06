@@ -210,3 +210,6 @@ slices_xy/
 data/
 result/
 test/
+inpaint/
+flow/
+gdxray/
