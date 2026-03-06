@@ -1,5 +1,5 @@
 # Dataset-Expansion
-Repository to extent dataset size for my thesis, which is used for anomaly detection within welds using neural networks.
+This repository aims to extent dataset size for my thesis, the topic of which is anomaly detection within CT scans of welds using neural networks.
 
 ### Dataset Characteristics
 - CT scans of welds - sliced to images
