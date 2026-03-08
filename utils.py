@@ -152,7 +152,47 @@ def display_masks_comparison(mask_a: np.ndarray, mask_b: np.ndarray, title_a="Ma
     plt.tight_layout()
     plt.show()
 
-################################################### FILES ############################################################
+
+def display_images_vertically(images: list[np.ndarray], titles: list[str] =None):
+    """
+    Displays a set of images in a vertical layout.
+
+    Args:
+        images (list[np.ndarray]): List of images to display.
+        titles (list[str], optional): List of titles to image. Defaults to None.
+
+    Raises:
+        ValueError: If the number of images and titles is not the same.
+    """
+    num_images = len(images)
+
+    if titles:
+        if num_images != len(titles):
+            raise ValueError("Number of images and titles must be the same.")
+    
+    # Scale the height based on the number of images
+    fig, axes = plt.subplots(nrows=num_images, ncols=1, figsize=(8, 5 * num_images))
+
+    # Only 1 image
+    if num_images == 1:
+        axes = [axes]
+
+    for i in range(num_images):
+        axes[i].imshow(images[i], cmap="gray")
+
+        if titles:
+            axes[i].set_title(titles[i])
+        else:
+            axes[i].set_title(f"Image {i}")
+        
+        axes[i].axis("off")        
+
+    plt.tight_layout()
+    plt.show()
+
+
+
+################################################### IMAGES ############################################################
 
 def load_images(dir_path: str) -> list[np.ndarray]:
     """
@@ -206,3 +246,69 @@ def resize_and_pad(img: np.ndarray, size: int =256) -> np.ndarray:
         new_img[pad_h:pad_h+new_h, pad_w:pad_w+new_w] = resized
         
         return new_img
+
+
+def split_and_pad(img: np.ndarray, padding=False, pad_width=30, soften=True) -> tuple[np.ndarray, np.ndarray]:
+    """
+    Splits the given image into two halves (left and right) and optionally adds black padding to the sides of the image and softens the edges.
+
+    Args:
+        img (np.ndarray): The image to be split.
+        padding (bool, optional): Whether to add black padding to the sides of the image. Defaults to False.
+        pad_width (int, optional): The width of the padding. Defaults to 30.
+        soften (bool, optional): Whether to soften the edges of the image using a Gaussian Blur. Softening is only applied if there is also padding. Defaults to True.
+
+    Returns:
+        tuple[np.ndarray, np.ndarray]: The two halves of the image.
+    """
+    h, w = img.shape
+    midpoint = w // 2
+    left_half = img[:, :midpoint]
+    right_half = img[:, midpoint:]
+
+    if padding:
+        left_half = pad_and_soften(left_half, pad_width, soften)
+        right_half = pad_and_soften(right_half, pad_width, soften)
+
+    return left_half, right_half
+
+
+
+def pad_and_soften(img: np.ndarray, pad_width: int =30, soften: bool =True) -> np.ndarray:
+    """
+    Pads the given image with a black border and optionally softens the edges of the image.
+
+    Args:
+        img (np.ndarray): The image to be padded and softened.
+        pad_width (int, optional): The width of the padding. Defaults to 30.
+        soften (bool, optional): Whether to soften the edges of the image. Defaults to True.
+
+    Returns:
+        np.ndarray: The padded and softened image.
+    """
+    ### PADDING
+
+    h, w = img.shape
+    # Larger black canvas
+    canvas_h, canvas_w = h + 2*pad_width, w + 2*pad_width
+    padded_img = np.zeros((canvas_h, canvas_w), dtype=np.uint8)
+    
+    # Place the image in the middle of canvas
+    padded_img[pad_width:pad_width + h, pad_width:pad_width + w] = img
+
+    if not soften:
+        return padded_img
+
+    ### SOFTENING
+
+    mask = np.zeros((canvas_h, canvas_w), dtype=np.float32)
+    mask[pad_width:pad_width+h, pad_width:pad_width+w] = 1.0
+
+    # Blur the mask to create the "feather" effect
+    blur_strength = 31
+    mask = cv2.GaussianBlur(mask, (blur_strength, blur_strength), 0)
+    
+    # Apply the mask
+    soft_edged = (padded_img.astype(float) * mask).astype(np.uint8)
+
+    return soft_edged

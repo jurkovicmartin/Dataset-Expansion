@@ -49,7 +49,9 @@ The best candidate that I have found is public [GDXray](https://domingomery.ing.
 
 <img src="README_img/gdxray.png" title="gdxray" alt="gdxray" width=100%>
 
-As seen above, the image is somewhat similar to the original set. Unfortunately, the set contains only a few masked images of the welds.
+As seen above, the image is somewhat similar to the original set. Based on the images' format, they are also split in half so they better match the original dataset's format. Unfortunately, the set contains only a few masked images of the welds, but by splitting them, the additional size is doubled.
+
+<img src="README_img/gdxray_split.png" title="gdxray split" alt="gdxray split" width=100%>
 
 ### 4. Why not GAN?
 A GAN was also considered as a potential method. The problem I found is that, as far as I know, GANs are generally used for generating synthetic normal data -- they effectively learn the distribution of what a normal sample should look like and can replicate it quite well. In my case (due to the absence of normal data), I cannot train a GAN to produce such a samples.
