@@ -29,8 +29,11 @@ class InpaintingManager:
         # self.algorithm = cv2.INPAINT_TELEA
 
 
-        if not os.path.exists(self.result_dir):
-            os.makedirs(self.result_dir)
+        self.result_img_dir = os.path.join(self.result_dir, "img")
+        self.result_mask_dir = os.path.join(self.result_dir, "mask")
+        
+        os.makedirs(self.result_img_dir, exist_ok=True)
+        os.makedirs(self.result_mask_dir, exist_ok=True)
 
         # Load image and mask names
         self.img_names = [f for f in os.listdir(img_dir) if f.endswith(".png")]
@@ -98,7 +101,9 @@ class InpaintingManager:
             image, mask = self._load_image_and_mask(i)
             synthetic = self.inpaint(image, mask)
 
-            cv2.imwrite(os.path.join(self.result_dir, f"{name}"), synthetic)
+            cv2.imwrite(os.path.join(self.result_img_dir, f"{name}"), synthetic)
+            # Save clean mask
+            cv2.imwrite(os.path.join(self.result_mask_dir, f"{name}"), np.zeros_like(synthetic))
 
         logging.info(f"Inpainting completed. Results saved in {self.result_dir}.")
 

@@ -4,12 +4,15 @@ import os
 from utils import *
 
 
-def main():
+def split_images():
+    """
+    Splits images into left and right parts.
+    """
     ### Settings
 
     IMG_DIR = "gdxray/img"
     MASK_DIR = "gdxray/mask"
-    RESULTS_DIR = "gdxray/splitted"
+    RESULTS_DIR = "gdxray/split"
 
     padding = True
     pad_size = 30
@@ -51,5 +54,5 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    split_images()
     
