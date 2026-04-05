@@ -217,6 +217,29 @@ def load_images(dir_path: str) -> list[np.ndarray]:
     return output
 
 
+def load_images_with_names(dir_path: str) -> tuple[list[np.ndarray], list[str]]:
+    """
+    Loads all images in a directory and returns also their names.
+
+    Args:
+        dir_path (str): Directory path containing the images to load.
+
+    Returns:
+        tuple[list[np.ndarray], list[str]]: A tuple containing a list of grayscale images and a list of their corresponding names.
+    """
+    output = []
+
+    names = [f for f in os.listdir(dir_path) if f.endswith(".png")]
+    names.sort()
+
+    for name in names:
+        path = os.path.join(dir_path, name)
+        img = cv2.imread(path, cv2.IMREAD_GRAYSCALE)
+        output.append(img)
+
+    return output, names
+
+
 def resize_and_pad(img: np.ndarray, size: int =256) -> np.ndarray:
         """
         Resizes the given image to the given size, and pads it to fit the size if necessary.

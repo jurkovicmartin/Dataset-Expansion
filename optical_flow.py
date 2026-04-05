@@ -2,13 +2,14 @@ import cv2
 import numpy as np
 import os
 import logging
+import math
 
 from utils import load_images
 
 
 class OpticalFlowManager:
     """
-    Manager for optical flow. Works with individual images. They must be set manually (attributes - gt_img, gt_mask and next_img).
+    Manager for optical flow. Works with individual images. They must be set manually (attributes - gt_img, gt_mask and target_img).
     Result is stored also as an attribute - propagated_mask.
     """
     def __init__(self, result_dir: str ="result/"):
@@ -21,8 +22,8 @@ class OpticalFlowManager:
         Attributes:
             gt_img (np.ndarray): Ground truth image.
             gt_mask (np.ndarray): Ground truth mask.
-            next_img (np.ndarray): Next image to be propagated.
-            propagated_mask (np.ndarray): Result of the propagation (next image with mask propagated).
+            target_img (np.ndarray): Target image to be propagated.
+            propagated_mask (np.ndarray): Result of the propagation (target image with mask propagated).
         """
         self.result_dir = result_dir
 
@@ -30,7 +31,7 @@ class OpticalFlowManager:
         # ! Have to be set manually set first
         self.gt_img: np.ndarray = None
         self.gt_mask: np.ndarray = None
-        self.next_img: np.ndarray = None
+        self.target_img: np.ndarray = None
         # Output attribute
         self.propagated_mask: np.ndarray = None
 
@@ -40,17 +41,17 @@ class OpticalFlowManager:
 
     def propagate_mask(self):
         """
-        Propagates the mask from the ground truth image to the next image using optical flow (backward flow).
+        Propagates the mask from the ground truth image to the target image using optical flow (backward flow).
 
-        Requires gt_img, gt_mask and next_img to be set first.
+        Requires gt_img, gt_mask and target_img to be set first.
         """
-        if self.gt_img is None or self.gt_mask is None or self.next_img is None:
-            raise ValueError("GT image, mask and next image must be set first. (Attribute gt_img, gt_mask and next_img)")
+        if self.gt_img is None or self.gt_mask is None or self.target_img is None:
+            raise ValueError("GT image, mask and target image must be set first. (Attribute gt_img, gt_mask and target_img)")
 
         # Calculate backward flow
-        # Flow from img to next_img
+        # Flow from img to target_img
         flow = cv2.calcOpticalFlowFarneback(
-            prev=self.next_img, 
+            prev=self.target_img, 
             next=self.gt_img, 
             flow=None, 
             pyr_scale=0.5,     # Image scale to build pyramids (0.5 is standard)
@@ -108,41 +109,55 @@ def run():
     samples = os.listdir(f"{DIR}")
     samples.sort()
 
-    display_result = True
+    display_result = False
 
     manager = OpticalFlowManager()
 
     for sample in samples:
         # Load images
-        images = load_images(f"{DIR}{sample}/img/")
+        images, images_names = load_images_with_names(f"{DIR}{sample}/img/")
         masks = load_images(f"{DIR}{sample}/mask/")
-        next_images = load_images(f"{DIR}{sample}/next/")
+        target_images, target_names = load_images_with_names(f"{DIR}{sample}/target/")
 
         # Set output path
-        result_path = f"{DIR}{sample}/result/"
+        result_path = f"{DIR}{sample}/result_2/"
         if not os.path.exists(result_path):
             os.mkdir(result_path)
         manager.result_dir = result_path
 
-        for i in range(len(images)):
-            # Setting the attributes
-            manager.gt_img = images[i]
-            manager.gt_mask = masks[i]
-            manager.next_img = next_images[i]
+        # How many targets per 1 GT ?
+        target_ratio = math.ceil(len(target_images) / len(images))
+        logging.info(f"Ratio for sample {sample}: {target_ratio} targets per GT")
+        
+        for target_idx in range(len(target_images)):
+            img_idx = target_idx // target_ratio
+            
+            # Ensure img_idx doesn't exceed the list bounds 
+            img_idx = min(img_idx, len(images) - 1)
 
+            # Setting the attributes
+            manager.gt_img = images[img_idx]
+            manager.gt_mask = masks[img_idx]
+            manager.target_img = target_images[target_idx]
+            
             # Propagating
             manager.propagate_mask()
             propagated_mask = manager.propagated_mask
 
-            manager.save_propagated_mask(f"propagated_mask_{i}.png")
+            manager.save_propagated_mask(f"propagated_mask_{target_names[target_idx]}")
 
             if display_result:
-                display_images([images[i], masks[i], next_images[i], propagated_mask],
-                            [f"GT Image {i}", f"GT Mask {i}", f"Image {i}", f"Propagated Mask {i}"])
+                display_images([images[img_idx], masks[img_idx], target_images[target_idx], propagated_mask],
+                            [f"GT Image {images_names[img_idx]}",
+                             f"GT Mask {images_names[img_idx]}",
+                             f"Target Image {target_names[target_idx]}",
+                             f"Propagated Mask {target_names[target_idx]}"])
                 
-                display_masks_comparison(masks[i], propagated_mask, f"GT Mask {i}", f"Propagated Mask {i}")
+                display_masks_comparison(masks[img_idx], propagated_mask,
+                                         f"GT Mask {images_names[img_idx]}", f"Propagated Mask {target_names[target_idx]}")
 
         logging.info(f"Processed sample {sample}")
+            
 
 
 

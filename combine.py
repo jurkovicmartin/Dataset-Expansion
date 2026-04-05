@@ -74,8 +74,8 @@ def combine_datasets(input_dirs: list[str], output_dir: str ="combined"):
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
 
-    datasets = ["extended_set/flow", "extended_set/gdxray", "extended_set/inpaint", "extended_set/original"]
+    datasets = ["extended_set/flow_2", "extended_set/gdxray", "extended_set/inpaint", "extended_set/original"]
     
-    output = "extended_set/combined"
+    output = "extended_set/combined_2"
     
     combine_datasets(datasets, output)
