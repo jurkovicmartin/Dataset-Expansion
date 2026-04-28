@@ -49,7 +49,7 @@ The best candidate that I have found is public [GDXray](https://domingomery.ing.
 
 <img src="README_img/gdxray.png" title="gdxray" alt="gdxray" width=100%>
 
-As seen above, the image is somewhat similar to the original set. Based on the images' format, they are also split in half so they better match the original dataset's format. Unfortunately, the set contains only a few masked images of the welds, but by splitting them, the additional size is doubled.
+As seen above, the image is somewhat similar to the original set. Based on the images' format, they are also split in quarters so they better match the original dataset's format. Unfortunately, the set contains only a few masked images of the welds, but by splitting them, the additional size is quadrupled.
 
 <img src="README_img/gdxray_split.png" title="gdxray split" alt="gdxray split" width=100%>
 

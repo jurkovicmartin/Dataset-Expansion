@@ -10,9 +10,9 @@ def split_images():
     """
     ### Settings
 
-    IMG_DIR = "gdxray/img"
-    MASK_DIR = "gdxray/mask"
-    RESULTS_DIR = "gdxray/split"
+    IMG_DIR = "gdxray/split/img"
+    MASK_DIR = "gdxray/split/mask"
+    RESULTS_DIR = "gdxray/split2"
 
     padding = True
     pad_size = 30
