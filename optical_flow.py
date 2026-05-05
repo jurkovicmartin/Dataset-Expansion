@@ -109,7 +109,7 @@ def run():
     samples = os.listdir(f"{DIR}")
     samples.sort()
 
-    display_result = False
+    display_result = True
 
     manager = OpticalFlowManager()
 

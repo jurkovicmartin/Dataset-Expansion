@@ -118,10 +118,13 @@ def display_masks_comparison(mask_a: np.ndarray, mask_b: np.ndarray, title_a="Ma
     mask_b_bool = mask_b.astype(bool)
 
     # Create  difference map
-    diff_img = np.zeros((*mask_a_bool.shape, 3), dtype=np.uint8)
-    diff_img[mask_a_bool & mask_b_bool] = [0, 0, 255] # Intersection
-    diff_img[mask_a_bool & ~mask_b_bool] = [255, 0, 0]    # Unique to A
-    diff_img[~mask_a_bool & mask_b_bool] = [0, 255, 0]    # Unique to B
+    diff_img = np.full((*mask_a_bool.shape, 3), 220, dtype=np.uint8)
+    INTERSECTION_COLOR = [0, 0, 139]
+    A_COLOR = [255, 0, 255]
+    B_COLOR = [0, 255, 0]  
+    diff_img[mask_a_bool & mask_b_bool] =  INTERSECTION_COLOR
+    diff_img[mask_a_bool & ~mask_b_bool] = A_COLOR
+    diff_img[~mask_a_bool & mask_b_bool] = B_COLOR
     
     fig, axes = plt.subplots(1, 3, figsize=(18, 6))
     
@@ -141,11 +144,11 @@ def display_masks_comparison(mask_a: np.ndarray, mask_b: np.ndarray, title_a="Ma
     axes[2].axis('off')
     
     # Legend
-    red_patch = mpatches.Patch(color="red", label=f"Only in {title_a}")
-    green_patch = mpatches.Patch(color="lime", label=f"Only in {title_b}")
-    white_patch = mpatches.Patch(color="blue", label="Intersection")
+    patch_a = mpatches.Patch(color=[c/255 for c in A_COLOR], label=f"Only in {title_a}")
+    patch_b = mpatches.Patch(color=[c/255 for c in B_COLOR], label=f"Only in {title_b}")
+    patch_inter = mpatches.Patch(color=[c/255 for c in INTERSECTION_COLOR], label="Intersection")
     
-    axes[2].legend(handles=[red_patch, green_patch, white_patch], 
+    axes[2].legend(handles=[patch_a, patch_b, patch_inter], 
                   loc="lower center", bbox_to_anchor=(0.5, -0.2), 
                   ncol=3, frameon=False)
 
